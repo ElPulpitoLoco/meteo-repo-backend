@@ -1,5 +1,16 @@
-controllers:
-    resource:
-        path: ../src/Controller/
-        namespace: App\Controller
-    type: attribute
+# Définition d'un regroupement de routes pour les contrôleurs
+controller:
+    resource: # Chemin relatif vers le dossier contenant vos fichiers de contrôleurs.  
+        path: ../src/Controller/ # Ici, on indique que tous les fichiers se trouvant sous ../src/Controller/ seront chargés.
+        namespace: App\Controller # Namespace (espace de noms) à utiliser pour ces contrôleurs. Toutes les classes trouvées dans ce dossier seront automatiquement préfixées par "App\Controller".
+    type: attribute # Type de chargement des routes : "attribute" indique que les routes sont définies via des attributs PHP, (similaire aux annotations) directement dans vos classes de contrôleur.
+
+autocomplete_city: # Définition explicite d'une route pour l'autocomplétion de ville
+    path: /autocomplete # L'URI (chemin) de la route, ici "/autocomplete" sera l'URL accessible dans votre application
+    controller: App\Controller\CityController::autocomplete # Le contrôleur et l'action à exécuter lorsqu'un GET est effectué sur /autocomplete. Dans ce cas, il s'agit de la méthode "autocomplete" de la classe "CityController" se trouvant dans l'espace "App\Controller".
+    methods: [GET] # Méthode HTTP autorisée pour cette route. Ici, seule une requête GET est acceptée.
+
+
+# Ce fichier de configuration permet de :
+# Charger automatiquement toutes les routes définies par attributs dans les contrôleurs situés dans le dossier spécifié.
+# Définir explicitement une route /autocomplete qui invoque la méthode autocomplete de CityController, accessible uniquement via une requête GET.

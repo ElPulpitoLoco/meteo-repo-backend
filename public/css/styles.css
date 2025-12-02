@@ -1,0 +1,148 @@
+/* 🌅 HEADER & 📌 FOOTER - Même couleur */
+.header-meteo, .footer-meteo {
+    background-color: #3f5095; /* Bleu profond */
+    color: white;
+    text-align: center;
+    padding: 40px 20px;
+    width: 100%;
+    position: relative;
+    margin: 0;
+}
+/* 📌 FOOTER - Alignement et espace */
+.footer-meteo {
+    margin-top: auto;  /* Pour forcer le footer à rester en bas */
+    height: 200px;
+    flex-shrink: 0;
+    position: relative;
+    width: 100%; /* S'assure que le footer prend toute la largeur de la fenêtre */
+    bottom: 0;
+}
+.lien-footer {
+    color: black;
+}
+.footer-meteo img {
+    width: 100px;
+}
+/* 🏙️ CONTENU PRINCIPAL */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #b1bfc9; /* Gris très clair */
+    padding-bottom: 0px;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    min-height: 100vh; /* Permet d'assurer que le footer reste en bas même si le contenu est court */
+}
+/* 🎨 CONTAINER - Fond contrasté */
+.container {
+    background: rgba(255, 255, 255, 0.9); /* Blanc semi-transparent */
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* Ombre légère */
+    flex: 1;  /* Permet au container de prendre toute la place restante */
+
+    width: 100%; /* Assure que le conteneur prend toute la largeur */
+    max-width: 1200px; /* Largeur max du contenu */
+    margin: 0 auto; /* Centrer le contenu */
+}
+/* 📝 CARTES MÉTÉO */
+.card {
+    border-radius: 10px;
+    overflow: hidden;
+}
+.card-body {
+    padding: 20px;
+}
+
+/* 🔍 FORMULAIRE DE RECHERCHE */
+.search-form {
+    display: flex;
+    flex-direction: column; /* Met l'input et le bouton en colonne */
+    align-items: center; /* Centre les éléments horizontalement */
+    gap: 10px; /* Ajoute un espace entre l'input et le bouton */
+    margin-bottom: 20px;
+}
+
+/* Conteneur de la barre de recherche */
+.search-wrapper {
+    position: relative;
+    width: 300px; /* Largeur fixe pour l'input */
+}
+
+/* Barre de recherche */
+#city-search {
+    width: 100%; /* Assure que l'input prend toute la largeur */
+}
+
+/* Cadre des suggestions */
+#suggestions-container {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    background: white;
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    border-top: none;
+}
+
+    /* Conteneur du bouton */
+.button-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center; /* Centre le bouton */
+}
+
+    /* Bouton de recherche */
+.btn-primary {
+    white-space: nowrap; /* Empêche le bouton de s'étirer */
+    width: auto; /* Taille ajustée automatiquement */
+    flex-shrink: 0; /* Bloque la taille du bouton */
+}
+
+.suggestion-item {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.suggestion-item:hover {
+    background-color: #f0f0f0;
+}
+
+.no-suggestions {
+    padding: 10px;
+    color: grey;
+    text-align: center;
+}
+
+/*Mon tableau de données*/
+/* Assure que le tableau peut défiler horizontalement */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    position: relative; /* Nécessaire pour éviter que sticky ne fonctionne mal */
+}
+
+/* Augmente la largeur pour forcer le scroll horizontal */
+.table-data {
+    min-width: 100%; /* S'assure que le tableau dépasse la largeur de l'écran */
+    border-collapse: collapse;
+}
+/* Assure que le texte des heures reste visible */
+.table-dark th {
+    color: black !important;
+}
+/* Fixe la première colonne */
+.sticky-column {
+    position: sticky;
+    left: 0;
+    background: rgb(13, 180, 60); /* Évite que le texte soit recouvert */
+    z-index: 3;
+    border-right: 2px solid #ddd; /* Séparation visuelle */
+    white-space: nowrap; /* Empêche que le texte se coupe */
+}
+

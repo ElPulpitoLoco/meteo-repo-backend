@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Météo -
+			{{ city ? city : 'Entrez une ville' }}</title>
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+		<link rel="stylesheet" href="css/styles.css">
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+	<!-- Leaflet CSS -->
+	</head>
+	<body>
+		<!--*************** Mon HEADER **************************************************-->
+		<header class="header-meteo text-center">
+			<h1>🌍 Météo en Direct</h1>
+			<p>Prévisions précises pour votre ville</p>
+		</header>
+		<!--****************** titre dyn pour demander et afficher ville *****************-->
+		<div class="container my-4">
+			<h1 class="text-center mb-4">
+				{% if city %}
+					🌤️ Météo pour
+					{{ city }}
+				{% else %}
+					🌤️ Entrez une ville pour voir la météo
+				{% endif %}
+			</h1>
+
+			<!-- Message d'erreur si la ville est invalide -->
+			{% if errorMessage %}
+				<div class="alert alert-danger text-center mb-4">
+					{{ errorMessage }}
+				</div>
+			{% endif %}
+
+			<!-- 🔍 FORMULAIRE DE RECHERCHE -->
+			<form method="get" class="search-form">
+				<div class="search-wrapper">
+					<input type="text" id="city-search" name="city" class="form-control"
+					 placeholder="Entrez une ville, pays" 
+					 value="{{ city }}" 
+					 pattern="^[A-Za-zÀ-ÿ\s\-]+,\s*[A-Za-zÀ-ÿ\s\-]+$"
+					 oninput="this.value = this.value.toLowerCase().replace(/[^A-Za-zÀ-ÿ\s-]/g, '').replace(/^./, c => c.toUpperCase())">
+					<div id="suggestions-container"></div>
+				</div>
+
+				<!-- Bouton placé sous l'input -->
+				<div class="button-wrapper">
+					<button type="submit" class="btn btn-primary">Rechercher</button>
+				</div>
+			</form>
+
+			{% if weather is not null %}
+				<div
+					class="row">
+					<!-- Informations principales ********************************-->
+					<div class="col-md-6">
+						<div class="card">
+							<div class="card-body text-center">
+								<h4 class="card-title">{{ weather.location.name }},
+									{{ weather.location.country }}</h4>
+								<p class="text-muted">{{ weather.location.region }}
+									-
+									{{ weather.location.tz_id }}</p>
+								<p>
+									<strong>Latitude:</strong>
+									{{ weather.location.lat }}° -
+									<strong>Longitude:</strong>
+									{{ weather.location.lon }}°</p>
+								<p id="live-clock" data-timezone="{{ weather.location.tz_id }}" class="fw-bold" style="font-size: 1.5rem;"></p>
+								<img src="https:{{ weather.current.condition.icon }}" alt="{{ weather.current.condition.text }}">
+								<h5 class="mt-2">{{ weather.current.condition.text }}</h5>
+								<p>
+									<strong>Température :</strong>
+									{{ weather.current.temp_c }}°C (Ressentie :
+									{{ weather.current.feelslike_c }}°C)</p>
+								<br>
+								<p>
+									<strong>Lever du soleil :</strong>
+									{{ weather.forecast.forecastday[0].astro.sunrise | date('H:i') }}</p>
+								<p>
+									<strong>Coucher du soleil :</strong>
+									{{ weather.forecast.forecastday[0].astro.sunset | date('H:i') }}</p>
+							</div>
+						</div>
+					</div>
+
+					<!-- Détails météo ***********************************************-->
+					<div class="col-md-6">
+						<div class="card">
+							<div class="card-body">
+								<h5 class="card-title">Détails météo</h5>
+								<ul class="list-group list-group-flush">
+									<li class="list-group-item">💨
+										<strong>Vent :</strong>
+										{{ weather.current.wind_kph }}
+										km/h 
+																				                            ({{ (weather.current.wind_kph / 1.852)|round(1) }}
+										nœuds,
+										{{ (weather.current.wind_kph / 3.6)|round(1) }}
+										m/s) -
+										{{ weather.current.wind_dir }}
+										({{ weather.current.wind_degree }}°)</li>
+									<li class="list-group-item">🌬️
+										<strong>Rafales :</strong>
+										{{ weather.current.gust_kph }}
+										km/h 
+																				                            ({{ (weather.current.gust_kph / 1.852)|round(1) }}
+										nœuds,
+										{{ (weather.current.gust_kph / 3.6)|round(1) }}
+										m/s)</li>
+									<li class="list-group-item">🌡️
+										<strong>Pression :</strong>
+										{{ weather.current.pressure_mb }}
+										hPa</li>
+									<li class="list-group-item">💧
+										<strong>Humidité :</strong>
+										{{ weather.current.humidity }}%</li>
+									<li class="list-group-item">🌫️
+										<strong>Point de rosée :</strong>
+										{{ weather.current.dewpoint_c }}°C</li>
+									<li class="list-group-item">☔
+										<strong>Pluviométrie :</strong>
+										{{ weather.current.precip_mm }}
+										mm</li>
+									<li class="list-group-item">👀
+										<strong>Visibilité :</strong>
+										{{ weather.current.vis_km }}
+										km</li>
+									<li class="list-group-item">☀️
+										<strong>Indice UV :</strong>
+										{{ weather.current.uv }}</li>
+									<li class="list-group-item">🕰️
+										<strong>Dernière mise à jour :</strong>
+										{{ weather.current.last_updated }}</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+
+					<!--***************** 📍 Carte interactive Leaflet ************************************-->
+					<h3 class="mt-4">La map:</h3>
+					<div id="map" data-lat="{{ weather.location.lat }}" data-lon="{{ weather.location.lon }}" data-city="{{ weather.location.name }}" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+
+					<!--**************** Évolution du temps heure par heure ********************-->
+					<h3 class="mt-4">Choix 1: Évolution du temps heure par heure</h3>
+					<canvas id="hourlyWeatherChart"></canvas>
+
+					<script>
+						var hourlyData = {{ weather.forecast.forecastday[0].hour | json_encode() | raw }};
+					</script>
+
+					<!-- 📊 Tableau d'évolution météo heure par heure -->
+					<h3 class="mt-4">Choix 2: Évolution du temps heure par heure</h3>
+					<div class="table-responsive">
+						<table class="table-data table-bordered text-center">
+							<thead class="table-dark">
+								<tr>
+									<th class="sticky-column">Heure</th>
+									{% for hour in weather.forecast.forecastday[0].hour %}
+										<th>{{ hour.time | date('H:i') }}</th>
+									{% endfor %}
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td class="sticky-column">
+										<strong>Température (°C)</strong>
+									</td>
+									{% for hour in weather.forecast.forecastday[0].hour %}
+										<td>{{ hour.temp_c }}°C</td>
+									{% endfor %}
+								</tr>
+								<tr>
+									<td class="sticky-column">
+										<strong>Vent moyen</strong>
+									</td>
+									{% for hour in weather.forecast.forecastday[0].hour %}
+										<td>
+											{{ hour.wind_kph }}
+											km/h
+											<br>
+											({{ (hour.wind_kph / 1.852)|round(1) }}
+											nœuds,
+											{{ (hour.wind_kph / 3.6)|round(1) }}
+											m/s)
+										</td>
+									{% endfor %}
+								</tr>
+								<tr>
+									<td class="sticky-column">
+										<strong>Rafales</strong>
+									</td>
+									{% for hour in weather.forecast.forecastday[0].hour %}
+										<td>
+											{{ hour.gust_kph }}
+											km/h
+											<br>
+											({{ (hour.gust_kph / 1.852)|round(1) }}
+											nœuds,
+											{{ (hour.gust_kph / 3.6)|round(1) }}
+											m/s)
+										</td>
+									{% endfor %}
+								</tr>
+								<tr>
+									<td class="sticky-column">
+										<strong>Direction du vent</strong>
+									</td>
+									{% for hour in weather.forecast.forecastday[0].hour %}
+										<td>{{ hour.wind_dir }}
+											({{ hour.wind_degree }}°)</td>
+									{% endfor %}
+								</tr>
+								<tr>
+									<td class="sticky-column">
+										<strong>Pression (hPa)</strong>
+									</td>
+									{% for hour in weather.forecast.forecastday[0].hour %}
+										<td>{{ hour.pressure_mb }}
+											hPa</td>
+									{% endfor %}
+								</tr>
+								<tr>
+									<td class="sticky-column">
+										<strong>Humidité (%)</strong>
+									</td>
+									{% for hour in weather.forecast.forecastday[0].hour %}
+										<td>{{ hour.humidity }}%</td>
+									{% endfor %}
+								</tr>
+								<tr>
+									<td class="sticky-column">
+										<strong>Précipitations (mm)</strong>
+									</td>
+									{% for hour in weather.forecast.forecastday[0].hour %}
+										<td>{{ hour.precip_mm }}
+											mm</td>
+									{% endfor %}
+								</tr>
+								<tr>
+									<td class="sticky-column">
+										<strong>Nuages (%)</strong>
+									</td>
+									{% for hour in weather.forecast.forecastday[0].hour %}
+										<td>{{ hour.cloud }}%</td>
+									{% endfor %}
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+
+					<!--**************** Prévisions météo (si disponibles) ********************-->
+					{% if weather.forecast is defined %}
+						<h2 class="text-center mt-4">Prévisions (Aujourd'hui + 3 jours)</h2>
+						<div class="row">
+							{% for day in weather.forecast.forecastday %}
+								<div
+									class="col-12 col-md-6 col-lg-3 mb-4">
+									<!-- 12 colonnes sur mobile, 6 sur tablette, 3 sur grand écran -->
+									<div class="card">
+										<div class="card-body text-center">
+											<h5>{{ day.date | date('Y-m-d') | format_datetime(pattern="EEEE d MMMM", locale="fr") }}</h5>
+											<img src="https:{{ day.day.condition.icon }}" alt="{{ day.day.condition.text }}">
+											<p>{{ day.day.condition.text }}</p>
+											<br>
+											<p>
+												<strong>Temp :
+													{{ day.day.mintemp_c }}°C Min /
+													{{ day.day.maxtemp_c }}°C Max</strong>
+											</p>
+										</div>
+									</div>
+								</div>
+							{% endfor %}
+						</div>
+					{% endif %}
+				{% else %}
+					<p class="text-center text-muted">Veuillez entrer une ville pour voir les prévisions météo.</p>
+				{% endif %}
+			</div>
+
+
+			<!--**************************** Footer ******************************* -->
+			<footer class="footer-meteo text-center">
+				<p>Powered by
+					<a class="lien-footer" href="https://www.weatherapi.com/" title="Free Weather API" target="_blank">WeatherAPI.com</a>
+				</p>
+				<p>
+					<a href="https://www.weatherapi.com/" title="Free Weather API" target="_blank">
+						<img src="https://cdn.weatherapi.com/v4/images/weatherapi_logo.png" alt="Weather data by WeatherAPI.com">
+					</a>
+				</p>
+				<p>Crée par moi</p>
+			</footer>
+
+			<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+			<!--JS Bootstrap-->
+			<script src="{{ asset('javascript/javascript.js') }}"></script>
+			<!--Mon JS-->
+
+			<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+			<!--Pour les graphs-->
+			<script src="{{ asset('javascript/weather-chart.js') }}"></script>
+			<!--Pour les graphs-->
+
+			<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+			<!-- Leaflet JS -->
+			<script src="{{ asset('javascript/leaflet.js') }}"></script><!--Mon JS leaflet--></body>
+	</body>
+</html>

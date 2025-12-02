@@ -1,24 +1,49 @@
-# This file is the entry point to configure your own services.
-# Files in the packages/ subdirectory configure your dependencies.
-
-# Put parameters here that don't need to change on each machine where the app is deployed
+# Ce fichier est le point d'entrée pour configurer vos propres services.  
+# Les fichiers dans le sous-dossier "packages/" configurent vos dépendances.  
+  
+# Placez ici les paramètres qui ne nécessitent pas de changer sur chaque machine où l'application est déployée.  
+# Référez-vous aux meilleures pratiques de Symfony pour l'utilisation des paramètres :  
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+
 parameters:
+    app.meteo_api_key: '%env(METEO_API_KEY)%' # Clé API pour accéder aux données météorologiques extraite des variables d'environnement.
+    app.meteo_base_url: '%env(METEO_BASE_URL)%' # URL de base pour l'API météo également extraite des variables d'environnement.
 
 services:
-    # default configuration for services in *this* file
+    # Configuration par défaut pour les services définis dans ce fichier.
     _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
-        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        autowire: true      # Injection automatique des dépendances dans vos services.
+        autoconfigure: true # Enregistrement automatique des services en tant que commandes, abonnés aux événements, etc.
 
-    # makes classes in src/ available to be used as services
-    # this creates a service per class whose id is the fully-qualified class name
+    # Rendre les classes contenues dans le dossier src/ disponibles en tant que services.  
+    # Cela crée automatiquement un service pour chaque classe possédant comme identifiant son nom de classe complet.
     App\:
         resource: '../src/'
         exclude:
-            - '../src/DependencyInjection/'
-            - '../src/Entity/'
-            - '../src/Kernel.php'
+            - '../src/DependencyInjection/' # Exclure le dossier de configuration spécifique afin d'éviter son enregistrement comme service.
+            - '../src/Entity/' # Exclure les entités qui ne sont pas considérées comme des services.
+            - '../src/Kernel.php' # Exclure le Kernel de l'application, car il ne doit pas être enregistré en tant que service.
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    # Ajoutez d'autres définitions de services pour une configuration explicite quand nécessaire.  
+    # Notez que les dernières définitions remplacent les précédentes si elles utilisent le même identifiant.
+
+    # Définition du service MeteoService qui gère les requêtes à l'API météo.
+    App\Service\MeteoService:
+        arguments:
+            $apiKey: '%app.meteo_api_key%'  # Passage de la clé API en paramètre pour l'initialisation du service.
+            $baseUrl: '%app.meteo_base_url%' # Passage de l'URL de base en paramètre pour l'initialisation du service.
+
+    # Déclaration de l'extension Twig pour l'internationalisation.
+    twig.extension.intl:
+        class: Twig\Extra\Intl\IntlExtension
+        tags: ['twig.extension'] # Indique à Twig qu'il s'agit d'une extension à charger.
+
+    # Configuration spécifique du contrôleur CityController pour l'injection de dépendances dans son constructeur.
+    App\Controller\CityController:
+        arguments:
+            $httpClient: '@http_client' # Injection d'une instance de HttpClientInterface via le service "http_client".
+            $params: '@parameter_bag'   # Injection du ParameterBagInterface pour accéder aux paramètres de configuration.
+
+# La section parameters définit des variables provenant des variables d'environnement pour faciliter leur gestion selon les environnements.
+# La section services utilise une configuration par défaut pour simplifier l'injection des dépendances et l'enregistrement des services, et elle inclut la mise à disposition automatique des classes du dossier src/ en tant que services (sauf celles excluses).
+# Les définitions explicites pour MeteoService, l'extension Twig et le contrôleur CityController précisent notamment les paramètres à injecter afin de garantir que chaque service dispose des dépendances nécessaires.
