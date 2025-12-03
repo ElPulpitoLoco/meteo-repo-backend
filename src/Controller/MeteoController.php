@@ -10,28 +10,38 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class MeteoController extends AbstractController
 {
-    // Route par défaut pour vérifier que l'API tourne sur Render
-    #[Route('/', name: 'api_home')]
+    #[Route('/', name: 'api_home', methods: ['GET'])]
     public function index(): JsonResponse
     {
-        return $this->json([
-            'status' => 'online', 
-            'message' => 'API Météo active. Utilisez /api/meteo?city=Paris'
-        ]);
+        return $this->json(
+            [
+                'status' => 'online',
+                'message' => 'API Météo active. Utilisez /api/meteo?city=Paris'
+            ],
+            200,
+            [
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type',
+            ]
+        );
     }
 
-    // La route principale que ton Frontend va appeler
-    #[Route('/api/meteo', name: 'api_meteo', methods: ['GET'])]
+    #[Route('/api/meteo', name: 'api_meteo', methods: ['GET', 'OPTIONS'])]
     public function getMeteo(Request $request, MeteoService $meteoService): JsonResponse
     {
-        $city = $request->query->get('city');
-
-        // Headers CORS pour autoriser ton site GitHub Pages
         $headers = [
-            'Access-Control-Allow-Origin' => '*', 
-            'Access-Control-Allow-Methods' => 'GET',
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
             'Access-Control-Allow-Headers' => 'Content-Type',
         ];
+
+        // Préflight CORS
+        if ($request->getMethod() === 'OPTIONS') {
+            return new JsonResponse(null, 204, $headers);
+        }
+
+        $city = $request->query->get('city');
 
         if (!$city) {
             return $this->json(['error' => 'Aucune ville fournie'], 400, $headers);

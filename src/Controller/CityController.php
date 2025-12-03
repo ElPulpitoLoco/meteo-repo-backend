@@ -1,11 +1,13 @@
 <?php
+
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class CityController extends AbstractController
 {
@@ -20,24 +22,29 @@ class CityController extends AbstractController
         $this->baseUrl = $params->get('app.meteo_base_url');
     }
 
-    #[Route('/api/city-autocomplete', name: 'api_city_autocomplete', methods: ['GET'])]
+    #[Route('/api/city-autocomplete', name: 'api_city_autocomplete', methods: ['GET', 'OPTIONS'])]
     public function autocomplete(Request $request): JsonResponse
     {
-        $query = $request->query->get('q');
-        
         $headers = [
             'Access-Control-Allow-Origin' => '*',
-            'Access-Control-Allow-Methods' => 'GET'
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => 'Content-Type',
         ];
+
+        // Préflight CORS
+        if ($request->getMethod() === 'OPTIONS') {
+            return new JsonResponse(null, 204, $headers);
+        }
+
+        $query = $request->query->get('q');
 
         if (!$query || strlen($query) < 3) {
             return new JsonResponse([], 200, $headers);
         }
 
-        // Attention: WeatherAPI utilise search.json
         $url = sprintf(
-            "%s/search.json?key=%s&q=%s",
-            $this->baseUrl,
+            '%s/search.json?key=%s&q=%s',
+            rtrim($this->baseUrl, '/'),
             $this->apiKey,
             urlencode($query)
         );
